@@ -50,8 +50,8 @@ class Schematic():
 
             for row, line in enumerate(lines):
 
-                #self.parseLineForPartNumbers(line,row)
-                self.parseLineForSymbols(line,row, self.numCols)
+                self.parseLineForPartNumbers(line, row, self.numCols)
+                self.parseLineForSymbols(line, row, self.numCols)
 
     
     ######################################################
@@ -59,15 +59,20 @@ class Schematic():
     def parseLineForPartNumbers(self, line: str, row: int, numCols: int ):
 
         currDigit = list()
-        startCol  = 0
-        endCol    = 0
+        
         for col, c in enumerate(line):
 
             if c.isdigit():
                 currDigit.append(c)
             else:
-                pass
+                if len(currDigit) != 0:
+                    digitStr = "".join(currDigit)
+                    p = PartNumber(digitStr, row, col, numCols )
 
+                    self.partNumbers.append(p)
+
+                    # Empty the list once we have initialized the number.
+                    currDigit = list()
 
     ######################################################
     def parseLineForSymbols(self, line: str, row: int, numCols: int ):
@@ -75,7 +80,6 @@ class Schematic():
         for col, c in enumerate(line):
             if not c.isalnum() and c != ".":
                 
-                pdb.set_trace()
                 s = Symbol(c, row, col, numCols)
 
                 self.symbols.append(s) 
@@ -86,10 +90,16 @@ class Schematic():
 ######################################################
 class PartNumber(Indexable):
 
-    def __init__(self):
-        self.value = 0
-        self.positions = list()
+    # part numbers can have a range of positions depending on how many digits they are.
+    def __init__(self, number: str, row: int, col: int, numCols: int):
+        self.value = int(number)
 
+        # We only get into this function at the last digit of the parsed number.
+        # To get the correct start position we must subtract its length
+        startPos = self.twoDIndexToLinearIndex(row, col, numCols)-len(number)
+
+        # Compute the index of each character in this number.
+        self.positions = [*range(startPos,startPos+len(number))]
 
 ######################################################
 #
