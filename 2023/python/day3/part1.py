@@ -19,6 +19,54 @@ class Indexable():
         col = index % numCols
 
         return ( row, col )
+######################################################
+#
+######################################################
+class PartNumber(Indexable):
+
+    # part numbers can have a range of positions depending on how many digits they are.
+    def __init__(self, number: str, row: int, col: int, numCols: int):
+        self.value = int(number)
+
+        # We only get into this function at the last digit of the parsed number.
+        # To get the correct start position we must subtract its length
+        startPos = self.twoDIndexToLinearIndex(row, col, numCols)-len(number)
+
+        # Compute the index of each character in this number.
+        self.positions = [*range(startPos,startPos+len(number))]
+
+        self.isPartNumber = False
+
+######################################################
+#
+######################################################
+class Symbol(Indexable):
+
+    def __init__(self, symbol:str, row: int, col: int, numCols: int):
+
+        self.symbol   = symbol
+        self.position = self.twoDIndexToLinearIndex(row,col,numCols)
+
+        self.neighbors = list()
+
+        self.computeNeighbors( row, col, numCols) 
+
+    def computeNeighbors(self, row: int, col:int , numCols: int):
+
+        # Compute the 8 surronding neihbor indices
+        # Neighbors directly above
+        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col+1, numCols) )
+        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col, numCols) )
+        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col-1, numCols) )
+        
+        # Right and left neighbors.
+        self.neighbors.append( self.twoDIndexToLinearIndex(row, col+1, numCols) )
+        self.neighbors.append( self.twoDIndexToLinearIndex(row, col-1, numCols) )
+
+        # Bottom neighbors.
+        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col+1, numCols) )
+        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col, numCols) )
+        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col-1, numCols) )
 
 ######################################################
 #
@@ -85,59 +133,38 @@ class Schematic():
                 self.symbols.append(s) 
 
 
-######################################################
-#
-######################################################
-class PartNumber(Indexable):
+    def computeIntersections(self) -> int:
 
-    # part numbers can have a range of positions depending on how many digits they are.
-    def __init__(self, number: str, row: int, col: int, numCols: int):
-        self.value = int(number)
+        partNumSum = 0
+        for s in self.symbols:
+            for p in self.partNumbers:
+                
+                partNumSum += self.checkPartSymbolIntersection(p,s)
 
-        # We only get into this function at the last digit of the parsed number.
-        # To get the correct start position we must subtract its length
-        startPos = self.twoDIndexToLinearIndex(row, col, numCols)-len(number)
 
-        # Compute the index of each character in this number.
-        self.positions = [*range(startPos,startPos+len(number))]
+        return(partNumSum)
 
-######################################################
-#
-######################################################
-class Symbol(Indexable):
+    def checkPartSymbolIntersection(self, p: PartNumber, s: Symbol) -> bool:
 
-    def __init__(self, symbol:str, row: int, col: int, numCols: int):
+        # Loop through neighbors 
+        for neighbor in s.neighbors:
 
-        self.symbol   = symbol
-        self.position = self.twoDIndexToLinearIndex(row,col,numCols)
+            # Loop through the positions
+            for position in p.positions:
+                # if any position matches up with a symbols neighbor, 
+                # return the value of this part number.
+                if position == neighbor:
+                    return( p.value)
 
-        self.neighbors = list()
+        # If there is no intersection, this is not a part number and we return nothing.
+        return(0)
 
-        self.computeNeighbors( row, col, numCols) 
 
-    def computeNeighbors(self, row: int, col:int , numCols: int):
-
-        # Compute the 8 surronding neihbor indices
-        # Neighbors directly above
-        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col+1, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col-1, numCols) )
-        
-        # Right and left neighbors.
-        self.neighbors.append( self.twoDIndexToLinearIndex(row, col+1, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row, col-1, numCols) )
-
-        # Bottom neighbors.
-        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col+1, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col-1, numCols) )
 
 
 
 if __name__ == "__main__":
     s = Schematic()
 
-    pdb.set_trace()
-    s.initialize("./test.txt")
-
-    pdb.set_trace()
+    s.initialize("puzzle_input.txt")
+    print(s.computeIntersections())
