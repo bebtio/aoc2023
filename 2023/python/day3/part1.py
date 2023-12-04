@@ -42,31 +42,35 @@ class PartNumber(Indexable):
 ######################################################
 class Symbol(Indexable):
 
-    def __init__(self, symbol:str, row: int, col: int, numCols: int):
+    def __init__(self, symbol:str, row: int, col: int, numRows: int, numCols: int):
 
         self.symbol   = symbol
         self.position = self.twoDIndexToLinearIndex(row,col,numCols)
 
         self.neighbors = list()
 
-        self.computeNeighbors( row, col, numCols) 
+        self.computeNeighbors( row, col, numRows, numCols) 
 
-    def computeNeighbors(self, row: int, col:int , numCols: int):
+    def computeNeighbors(self, row: int, col:int , numRows: int, numCols: int):
 
         # Compute the 8 surronding neihbor indices
         # Neighbors directly above
-        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col+1, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row+1, col-1, numCols) )
         
-        # Right and left neighbors.
-        self.neighbors.append( self.twoDIndexToLinearIndex(row, col+1, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row, col-1, numCols) )
+        for r in range(-1,2,1):
+            for c in range(-1,2,1):
 
-        # Bottom neighbors.
-        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col+1, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col, numCols) )
-        self.neighbors.append( self.twoDIndexToLinearIndex(row-1, col-1, numCols) )
+                curRow = row + r
+                curCol = col + c
+
+                
+                if not (curRow == row and curCol == col):
+                    # only add them if thare within the bounds of 0 to numRows and 0 to numCols
+                    
+                    if( curRow < numRows and curRow >= 0):
+                        if( curCol < numCols and curCol >= 0):
+                            self.neighbors.append( self.twoDIndexToLinearIndex(curRow, curCol, numCols) )
+        
+
 
 ######################################################
 #
@@ -97,11 +101,10 @@ class Schematic():
             self.numRows = len(lines)
 
             for row, line in enumerate(lines):
-
                 self.parseLineForPartNumbers(line, row, self.numCols)
-                self.parseLineForSymbols(line, row, self.numCols)
+                self.parseLineForSymbols(line, row, self.numRows, self.numCols)
 
-    
+        
     ######################################################
     # Pass the current line and the row its in.
     def parseLineForPartNumbers(self, line: str, row: int, numCols: int ):
@@ -122,13 +125,20 @@ class Schematic():
                     # Empty the list once we have initialized the number.
                     currDigit = list()
 
+        # Handle the last number in case there is one at the end of the file.
+        if len(currDigit)!= 0:
+            
+            digitStr = "".join(currDigit)
+            p = PartNumber(digitStr, row, col, numCols )
+
+            self.partNumbers.append(p)
     ######################################################
-    def parseLineForSymbols(self, line: str, row: int, numCols: int ):
+    def parseLineForSymbols(self, line: str, row: int, numRows: int, numCols: int ):
 
         for col, c in enumerate(line):
             if not c.isalnum() and c != ".":
                 
-                s = Symbol(c, row, col, numCols)
+                s = Symbol(c, row, col, numRows, numCols)
 
                 self.symbols.append(s) 
 
@@ -154,17 +164,29 @@ class Schematic():
                 # if any position matches up with a symbols neighbor, 
                 # return the value of this part number.
                 if position == neighbor:
-                    return( p.value)
+                    p.isPartNumber = True
+                    return( p.value )
 
         # If there is no intersection, this is not a part number and we return nothing.
         return(0)
 
 
 
+    def getRealPartNumbers(self):
 
+        realPartNumbers = [p for p in self.partNumbers if p.isPartNumber]
+
+        return( realPartNumbers )
+
+    def getFakePartNumbers(self):
+
+        fakePartNumbers = [p for p in self.partNumbers if not p.isPartNumber]
+
+        return( fakePartNumbers )
 
 if __name__ == "__main__":
     s = Schematic()
 
     s.initialize("puzzle_input.txt")
+
     print(s.computeIntersections())
