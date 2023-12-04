@@ -170,8 +170,7 @@ class Schematic():
                     g.partNumberRatios.append(p.value) 
                     return
 
-    def getSumOfGearRations(self) -> int:
-        pdb.set_trace()
+    def getSumOfGearRatios(self) -> int:
         sum = 0
         for g in self.gears:
 
@@ -200,4 +199,4 @@ if __name__ == "__main__":
     s.initialize("puzzle_input.txt")
     s.computeIntersections()
 
-    print(s.getSumOfGearRations())
+    print(s.getSumOfGearRatios())
