@@ -40,15 +40,17 @@ class PartNumber(Indexable):
 ######################################################
 #
 ######################################################
-class Symbol(Indexable):
+class Gear(Indexable):
 
-    def __init__(self, symbol:str, row: int, col: int, numRows: int, numCols: int):
+    def __init__(self, gear:str, row: int, col: int, numRows: int, numCols: int):
 
-        self.symbol   = symbol
+        self.gear   =gear 
         self.position = self.twoDIndexToLinearIndex(row,col,numCols)
 
         self.neighbors = list()
 
+        # This is where part number adjacent to this Gear will go.
+        self.partNumberRatios    = list()
         self.computeNeighbors( row, col, numRows, numCols) 
 
     def computeNeighbors(self, row: int, col:int , numRows: int, numCols: int):
@@ -84,7 +86,7 @@ class Schematic():
         self.numRows    = 0
 
         self.partNumbers = list()
-        self.symbols     = list()
+        self.gears       = list()
 
 
     ######################################################
@@ -102,7 +104,7 @@ class Schematic():
 
             for row, line in enumerate(lines):
                 self.parseLineForPartNumbers(line, row, self.numCols)
-                self.parseLineForSymbols(line, row, self.numRows, self.numCols)
+                self.parseLineForGears(line, row, self.numRows, self.numCols)
 
         
     ######################################################
@@ -132,44 +134,52 @@ class Schematic():
             p = PartNumber(digitStr, row, col, numCols )
 
             self.partNumbers.append(p)
+    
     ######################################################
-    def parseLineForSymbols(self, line: str, row: int, numRows: int, numCols: int ):
+    # Parse for gears "*" this time.
+    def parseLineForGears(self, line: str, row: int, numRows: int, numCols: int ):
 
         for col, c in enumerate(line):
-            if not c.isalnum() and c != ".":
+            if c == "*":
                 
-                s = Symbol(c, row, col, numRows, numCols)
+                g = Gear(c, row, col, numRows, numCols)
 
-                self.symbols.append(s) 
+                self.gears.append(g) 
 
 
-    def computeIntersections(self) -> int:
+    def computeIntersections(self):
 
         partNumSum = 0
-        for s in self.symbols:
+        for g in self.gears:
             for p in self.partNumbers:
                 
-                partNumSum += self.checkPartSymbolIntersection(p,s)
+                self.checkPartGearIntersection(p,g)
 
 
-        return(partNumSum)
 
-    def checkPartSymbolIntersection(self, p: PartNumber, s: Symbol) -> bool:
+    def checkPartGearIntersection(self, p: PartNumber, g: Gear):
 
         # Loop through neighbors 
-        for neighbor in s.neighbors:
+        for neighbor in g.neighbors:
 
             # Loop through the positions
             for position in p.positions:
-                # if any position matches up with a symbols neighbor, 
-                # return the value of this part number.
+                
+                # Add all part numbers that are adjacent to the gear.
                 if position == neighbor:
-                    p.isPartNumber = True
-                    return( p.value )
+                    g.partNumberRatios.append(p.value) 
+                    return
 
-        # If there is no intersection, this is not a part number and we return nothing.
-        return(0)
+    def getSumOfGearRations(self) -> int:
+        pdb.set_trace()
+        sum = 0
+        for g in self.gears:
 
+            if len(g.partNumberRatios) == 2:
+                sum += g.partNumberRatios[0] * g.partNumberRatios[1]
+                
+
+        return(sum)
 
 
     def getRealPartNumbers(self):
@@ -188,5 +198,6 @@ if __name__ == "__main__":
     s = Schematic()
 
     s.initialize("puzzle_input.txt")
+    s.computeIntersections()
 
-    print(s.computeIntersections())
+    print(s.getSumOfGearRations())
