@@ -1,4 +1,6 @@
+from multiprocessing import Pool
 import pdb
+
 
 class Almanac():
     
@@ -90,22 +92,28 @@ class Almanac():
 
     def findMinTraversal(self) -> int:
 
-        minTraversal = self.traverseMaps( [*self.seedList[0]][0] )
 
         print(self.seedList)
-        for ridx, seedRange in enumerate(self.seedList):
+        with Pool(processes=10) as pool:
+            result = pool.map(self.traverseSeedRange,self.seedList)
 
-            print(f" Computing seedRange = {seedRange}")
-            for idx,seed in enumerate(seedRange):
-                print(f"SeedRange: {ridx}/{len(self.seedList)}: Percent Completion: {float(idx)/float(len(seedRange))}")
-                tmp = self.traverseMaps( seed )
 
-                if tmp < minTraversal:
-                    minTraversal = tmp
-
+        minTraversal = min(result)
 
         return minTraversal
 
+    def traverseSeedRange(self, seedRange: list()) -> int:
+
+        minTraversal = self.traverseMaps( [*self.seedList[0]][0] )
+
+        for idx,seed in enumerate(seedRange):
+            tmp = self.traverseMaps( seed )
+
+            if tmp < minTraversal:
+                minTraversal = tmp
+
+        return minTraversal
+                
     def traverseMaps(self, seed: int) -> int:
 
         nextDestination = seed
