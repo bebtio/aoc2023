@@ -26,11 +26,10 @@ class NodeTraveler():
 
                 self.nodes[n.name] = n
 
-
     def stepsToZZZ(self):
 
         steps  = 0
-        curNode = self.nodes[self.startNode]
+        curNode = self.nodes["AAA"]
 
         while curNode.name != "ZZZ":
 
