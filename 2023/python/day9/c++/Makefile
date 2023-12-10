@@ -1,7 +1,7 @@
 
 
-day_9_part1: main.cpp readlines.cpp
-	g++ -g main.cpp readlines.cpp -o day_9_part1
+day_9_part1: part1.cpp readlines.cpp
+	g++ -g part1.cpp readlines.cpp -o day_9_part1
 
 
 .PHONY:
